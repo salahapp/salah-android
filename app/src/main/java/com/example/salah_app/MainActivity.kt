@@ -19,11 +19,12 @@ import androidx.compose.ui.unit.dp
 import com.example.salah_app.ui.theme.SalahappTheme
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.sp
+import com.google.accompanist.pager.ExperimentalPagerApi
+import com.google.accompanist.pager.HorizontalPager
+import com.google.accompanist.pager.rememberPagerState
 
 
 class MainActivity : ComponentActivity() {
@@ -46,17 +47,15 @@ fun CardDemo(ArbitraryTime: String) {
         shape = RoundedCornerShape(10),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(15.dp)
-            .clickable{ },
+            .padding(15.dp),
         elevation = 10.dp
     ) {
         Column(
-            modifier = Modifier.padding(25.dp).fillMaxWidth(),
-
+            modifier = Modifier.padding(25.dp).fillMaxWidth()
         ) {
             Text(
                 buildAnnotatedString {
-                    withStyle(style = SpanStyle(fontWeight = FontWeight.Light,fontSize = 15.sp, color = Color(0xFF607d8b) )
+                    withStyle(style = SpanStyle(fontWeight = FontWeight.Light,fontSize = 30.sp, color = Color(0xFF607d8b) )
                     ) {
                         append("Upcoming Prayer")
                     }
@@ -64,7 +63,7 @@ fun CardDemo(ArbitraryTime: String) {
             )
             Text(
                 buildAnnotatedString {
-                    withStyle(style = SpanStyle(fontWeight =FontWeight.Bold, fontSize = 30.sp)
+                    withStyle(style = SpanStyle(fontWeight =FontWeight.Bold, fontSize = 60.sp)
                     ) {
                         append("Isha at: $ArbitraryTime")
                     }
@@ -77,21 +76,28 @@ fun CardDemo(ArbitraryTime: String) {
 
 @Composable
 fun Greeting(name: String) {
-    Column() {
-
-        LazyRowDemo()
-    }
+    LazyRowDemo()
 }
 
+@OptIn(ExperimentalPagerApi::class)
 @Composable
 fun LazyRowDemo() {
     val list = ((65..65+72).map { it.toChar() })
-    LazyRow(modifier = Modifier.fillMaxHeight().fillMaxWidth()) {
-        items(items = list, itemContent = { item ->
-            Log.d("COMPOSE", "This get rendered $item")
-            CardDemo(ArbitraryTime = item.toString())
-        })
+    val pagerState = rememberPagerState(pageCount = 10)
+
+    HorizontalPager(state = pagerState) { page ->
+        // Our page content
+        CardDemo(ArbitraryTime = list[page].toString())
+
     }
+
+//    LazyRow(modifier = Modifier.fillMaxHeight().fillMaxWidth()) {
+//        items(items = list, itemContent = { item ->
+//            Log.d("COMPOSE", "This get rendered $item")
+//            CardDemo(ArbitraryTime = item.toString())
+//
+//        })
+//    }
 }
 
 
