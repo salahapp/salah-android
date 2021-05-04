@@ -5,10 +5,10 @@ import androidx.lifecycle.ViewModel
 
 class AthanViewModel: ViewModel() {
 
-    private var _currentLocation = MutableLiveData(Pair(0.0, 0.0))
-    val currentLocation: LiveData<Pair<Double,Double>> = _currentLocation
+    private var _currentLocation = MutableLiveData(Triple(0.0, 0.0,0.0))
+    val currentLocation: LiveData<Triple<Double,Double,Double>> = _currentLocation
 
-    fun refresh_location(location : Pair<Double,Double>) {
+    fun refresh_location(location : Triple<Double,Double,Double>) {
         _currentLocation.value = location
 
     }

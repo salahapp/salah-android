@@ -38,6 +38,7 @@ import com.google.android.gms.location.*
 import com.google.android.gms.tasks.Task
 import compose.icons.WeatherIcons
 import compose.icons.weathericons.Sunrise
+import java.util.*
 
 
 class MainActivity : ComponentActivity() {
@@ -59,6 +60,7 @@ class MainActivity : ComponentActivity() {
         }
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+
         val locationRequest = LocationRequest.create()?.apply {
             // interval -> half day,fastest->interval hour, low power
             interval = 43200000L
@@ -73,11 +75,11 @@ class MainActivity : ComponentActivity() {
         val task: Task<LocationSettingsResponse> = client.checkLocationSettings(builder.build())
         fusedLocationClient.lastLocation
             .addOnSuccessListener { location : android.location.Location? ->
-                Log.i("Loc Succeed", "Got Location: ${location?.latitude} ${location?.longitude} \n\n")
+                Log.i("Loc Succeed", "Got Location: ${location?.latitude} ${location?.longitude} ${location?.altitude} \n\n")
                 val latitude = (location?.latitude ?: 0.0)
                 val longitude = (location?.longitude ?: 0.0)
-
-                athanViewModel.refresh_location(Pair(latitude,longitude))
+                val altitude =  (location?.altitude ?: 0.0)
+                athanViewModel.refresh_location(Triple(latitude,longitude,altitude))
 
             }
 
@@ -166,12 +168,19 @@ fun CardDemo(ArbitraryTime: String) {
 
 @Composable
 fun WhereHeAt(athanViewModel: AthanViewModel) {
-    val location : Pair<Double,Double>? by athanViewModel.currentLocation.observeAsState()
-    val (latidude, longitude) = location ?: Pair(0.0,0.0)
+    // TODO: code is messy as of now, def needs improvement if possible....
+    // Altidude seems borked on my device, no idea why. Need to investigate, zero altidude calculations are used on islamicFinder, so worst case we have same accuracy.
+
+    val location : Triple<Double,Double,Double>? by athanViewModel.currentLocation.observeAsState()
+    val (latidude, longitude, altitude) = location ?: Triple(0.0,0.0,0.0)
+    val date = Date().time
+    val tz = TimeZone.getDefault().getOffset(date) / (3600.0 * 1000.0)
+
+    Log.i("time", tz.toString())
     Log.i("Salat Times: ",
-        SalatTimes(location = Location("Nuuk", latidude, longitude, 16.0, 6.0)).salatDateTimes.toString()
+        SalatTimes(location = Location("TBD", latidude, longitude, altitude, tz), calculationMethod = CalculationMethod.ISLAMIC_SOCIETY_OF_NORTH_AMERICA).salatDateTimes.toString()
     )
-    Text("$latidude $longitude")
+    Text("$latidude $longitude $altitude")
 }
 
 
