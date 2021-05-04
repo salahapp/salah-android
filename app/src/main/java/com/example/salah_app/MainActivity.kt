@@ -38,6 +38,11 @@ import com.google.android.gms.location.*
 import com.google.android.gms.tasks.Task
 import compose.icons.WeatherIcons
 import compose.icons.weathericons.Sunrise
+import java.text.DateFormat
+import java.text.SimpleDateFormat
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import java.util.*
 
 
@@ -61,7 +66,7 @@ class MainActivity : ComponentActivity() {
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
-        val locationRequest = LocationRequest.create()?.apply {
+        val locationRequest = LocationRequest.create().apply {
             // interval -> half day,fastest->interval hour, low power
             interval = 43200000L
             fastestInterval = 60
@@ -80,6 +85,7 @@ class MainActivity : ComponentActivity() {
                 val longitude = (location?.longitude ?: 0.0)
                 val altitude =  (location?.altitude ?: 0.0)
                 athanViewModel.refresh_location(Triple(latitude,longitude,altitude))
+                athanViewModel.calculate_athan_local_times()
 
             }
 
@@ -105,8 +111,8 @@ class MainActivity : ComponentActivity() {
                 // A surface container using the 'background' color from the theme
                 Surface(color = MaterialTheme.colors.background) {
                     Column() {
-                        WhereHeAt(athanViewModel)
-                        LazyRowDemo()
+                        FindLocation(athanViewModel)
+                        AthanCardRow(athanViewModel)
                     }
 
                 }
@@ -116,7 +122,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun CardDemo(ArbitraryTime: String) {
+fun CardDemo(SalahName: String, ArbitraryTime: String) {
     Card(
         shape = RoundedCornerShape(10),
         modifier = Modifier
@@ -157,7 +163,7 @@ fun CardDemo(ArbitraryTime: String) {
                 buildAnnotatedString {
                     withStyle(style = SpanStyle(fontWeight =FontWeight.Bold, fontSize = 40.sp)
                     ) {
-                        append("Isha at $ArbitraryTime PM")
+                        append("$SalahName at $ArbitraryTime")
                     }
                 }
             )
@@ -167,7 +173,7 @@ fun CardDemo(ArbitraryTime: String) {
 }
 
 @Composable
-fun WhereHeAt(athanViewModel: AthanViewModel) {
+fun FindLocation(athanViewModel: AthanViewModel) {
     // TODO: code is messy as of now, def needs improvement if possible....
     // Altidude seems borked on my device, no idea why. Need to investigate, zero altidude calculations are used on islamicFinder, so worst case we have same accuracy.
 
@@ -187,23 +193,24 @@ fun WhereHeAt(athanViewModel: AthanViewModel) {
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
-fun LazyRowDemo() {
-    val list = ((0..5).map { "${it*2}:${it}0" })
+fun AthanCardRow(athanViewModel: AthanViewModel) {
+    val athans = listOf("Fajr", "Dhuhr", "Asr", "Maghrib", "Isha")
+    val locationAthans : HashMap<String,LocalDateTime>? by athanViewModel.localAthanTimes.observeAsState()
+    val formatter = DateTimeFormatter.ofPattern("hh:mm a")
     val pagerState = rememberPagerState(pageCount = 5)
 
     HorizontalPager(state = pagerState) { page ->
-        // Our page content
-        CardDemo(ArbitraryTime = list[page].toString())
-
+        // IDE GENERATED CODE -> Might need to get optimized / double checked.
+        locationAthans?.get(athans[page])?.let { CardDemo(ArbitraryTime = it.format(formatter), SalahName=athans[page]) }
     }
 
 }
 
 
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    SalahappTheme {
-        LazyRowDemo()
-    }
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun DefaultPreview() {
+//    SalahappTheme {
+//        AthanCardRow()
+//    }
+//}
