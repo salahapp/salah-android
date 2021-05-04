@@ -2,8 +2,10 @@
 buildscript {
     val compose_version by extra("1.0.0-beta05")
     repositories {
+
         google()
         mavenCentral()
+
     }
     dependencies {
         classpath("com.android.tools.build:gradle:7.0.0-alpha15")

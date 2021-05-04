@@ -1,11 +1,23 @@
 package com.example.salah_app
 
+import Location
+import SalatTimes
+import android.Manifest
+import android.content.Context
+import android.content.IntentSender
+import android.content.pm.PackageManager
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
@@ -14,26 +26,87 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.salah_app.ui.theme.SalahappTheme
-import androidx.compose.material.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.sp
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import com.example.salah_app.ui.theme.SalahappTheme
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
+import com.google.android.gms.common.api.ResolvableApiException
+import com.google.android.gms.location.*
+import com.google.android.gms.tasks.Task
 import compose.icons.WeatherIcons
-
 import compose.icons.weathericons.Sunrise
 
 
 class MainActivity : ComponentActivity() {
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+    protected  val REQUEST_CHECK_SETTINGS = 0x1
+    val athanViewModel by viewModels<AthanViewModel>()
+
+    private fun Context.checkSinglePermission(permission: String) : Boolean {
+        return ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        if (!checkSinglePermission(Manifest.permission.ACCESS_COARSE_LOCATION)){
+            ActivityCompat.requestPermissions(this,
+                arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION), 1);
+
+        }
+
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        val locationRequest = LocationRequest.create()?.apply {
+            // interval -> half day,fastest->interval hour, low power
+            interval = 43200000L
+            fastestInterval = 60
+            priority = LocationRequest.PRIORITY_LOW_POWER
+        }
+
+
+        val builder = LocationSettingsRequest.Builder()
+            .addLocationRequest(locationRequest!!)
+        val client: SettingsClient = LocationServices.getSettingsClient(this)
+        val task: Task<LocationSettingsResponse> = client.checkLocationSettings(builder.build())
+        fusedLocationClient.lastLocation
+            .addOnSuccessListener { location : android.location.Location? ->
+                Log.i("Loc Succeed", "Got Location: ${location?.latitude} ${location?.longitude} \n\n")
+                val latitude = (location?.latitude ?: 0.0)
+                val longitude = (location?.longitude ?: 0.0)
+
+                athanViewModel.refresh_location(Pair(latitude,longitude))
+
+            }
+
+        task.addOnFailureListener { exception ->
+            Log.i("Loc Failed", "Got Location: $exception")
+            if (exception is ResolvableApiException){
+                // Location settings are not satisfied, but this can be fixed
+                // by showing the user a dialog.
+                try {
+                    // Show the dialog by calling startResolutionForResult(),
+                    // and check the result in onActivityResult().
+                    exception.startResolutionForResult(this@MainActivity,
+                        REQUEST_CHECK_SETTINGS)
+                } catch (sendEx: IntentSender.SendIntentException) {
+                    // Ignore the error.
+                }
+            }
+        }
+
+
         setContent {
             SalahappTheme {
                 // A surface container using the 'background' color from the theme
                 Surface(color = MaterialTheme.colors.background) {
-                    Greeting("Android")
+                    Column() {
+                        WhereHeAt(athanViewModel)
+                        LazyRowDemo()
+                    }
+
                 }
             }
         }
@@ -50,7 +123,9 @@ fun CardDemo(ArbitraryTime: String) {
         elevation = 10.dp
     ) {
         Column(
-            modifier = Modifier.padding(25.dp).fillMaxWidth()
+            modifier = Modifier
+                .padding(25.dp)
+                .fillMaxWidth()
         ) {
             Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically){
 
@@ -85,22 +160,26 @@ fun CardDemo(ArbitraryTime: String) {
                 }
             )
 
-
-
-
         }
     }
 }
 
 @Composable
-fun Greeting(name: String) {
-    LazyRowDemo()
+fun WhereHeAt(athanViewModel: AthanViewModel) {
+    val location : Pair<Double,Double>? by athanViewModel.currentLocation.observeAsState()
+    val (latidude, longitude) = location ?: Pair(0.0,0.0)
+    Log.i("Salat Times: ",
+        SalatTimes(location = Location("Nuuk", latidude, longitude, 16.0, 6.0)).salatDateTimes.toString()
+    )
+    Text("$latidude $longitude")
 }
+
+
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
 fun LazyRowDemo() {
-    val list = ((1..6).map { "${it*2}:${it}0" })
+    val list = ((0..5).map { "${it*2}:${it}0" })
     val pagerState = rememberPagerState(pageCount = 5)
 
     HorizontalPager(state = pagerState) { page ->
@@ -116,6 +195,6 @@ fun LazyRowDemo() {
 @Composable
 fun DefaultPreview() {
     SalahappTheme {
-        Greeting("Android")
+        LazyRowDemo()
     }
 }
