@@ -21,6 +21,7 @@ class AthanViewModel: ViewModel() {
 
     fun refresh_location(location : Triple<Double,Double,Double>) {
         _currentLocation.value = location
+        calculate_athan_local_times()
     }
     fun calculate_athan_local_times(){
 

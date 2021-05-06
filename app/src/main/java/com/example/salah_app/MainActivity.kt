@@ -2,15 +2,14 @@ package com.example.salah_app
 
 import Location
 import SalatTimes
-import android.Manifest
-import android.content.Context
+import android.annotation.SuppressLint
 import android.content.IntentSender
-import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
@@ -24,11 +23,8 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import com.example.salah_app.ui.theme.SalahappTheme
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
@@ -38,30 +34,50 @@ import com.google.android.gms.location.*
 import com.google.android.gms.tasks.Task
 import compose.icons.WeatherIcons
 import compose.icons.weathericons.Sunrise
-import java.text.DateFormat
-import java.text.SimpleDateFormat
+
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
+
 import java.util.*
+import androidx.compose.ui.tooling.preview.Preview
 
 
-class MainActivity : ComponentActivity() {
+import com.karumi.dexter.listener.single.PermissionListener
+
+import com.karumi.dexter.PermissionToken
+import com.karumi.dexter.listener.PermissionDeniedResponse
+import com.karumi.dexter.listener.PermissionGrantedResponse
+import com.karumi.dexter.listener.PermissionRequest
+
+
+class MainActivity : ComponentActivity(), PermissionListener {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     protected  val REQUEST_CHECK_SETTINGS = 0x1
+
+
     val athanViewModel by viewModels<AthanViewModel>()
 
-    private fun Context.checkSinglePermission(permission: String) : Boolean {
-        return ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED
+
+    override fun onPermissionGranted(response: PermissionGrantedResponse?) {
+        getLocation()
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+    override fun onPermissionRationaleShouldBeShown(permission: PermissionRequest?, token: PermissionToken?) {
 
-        if (!checkSinglePermission(Manifest.permission.ACCESS_COARSE_LOCATION)){
-            ActivityCompat.requestPermissions(this,
-                arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION), 1);
+    }
 
+    override fun onPermissionDenied(response: PermissionDeniedResponse?) {
+        Log.i("DENY", "Not working....")
+
+    }
+
+
+    // TODO: Permissions are already being checked but might need more tweaking.
+    @SuppressLint("MissingPermission")
+    private fun getLocation() {
+
+        if (!Permissions.checkPermissions(applicationContext)) {
+            Permissions.requestPermissions(applicationContext, this)
         }
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
@@ -71,13 +87,14 @@ class MainActivity : ComponentActivity() {
             interval = 43200000L
             fastestInterval = 60
             priority = LocationRequest.PRIORITY_LOW_POWER
-        }
 
+        }
 
         val builder = LocationSettingsRequest.Builder()
             .addLocationRequest(locationRequest!!)
         val client: SettingsClient = LocationServices.getSettingsClient(this)
         val task: Task<LocationSettingsResponse> = client.checkLocationSettings(builder.build())
+
         fusedLocationClient.lastLocation
             .addOnSuccessListener { location : android.location.Location? ->
                 Log.i("Loc Succeed", "Got Location: ${location?.latitude} ${location?.longitude} ${location?.altitude} \n\n")
@@ -104,15 +121,21 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        getLocation()
 
         setContent {
+            val location : Triple<Double,Double,Double>? by athanViewModel.currentLocation.observeAsState()
+            val locationAthans : HashMap<String,LocalDateTime>? by athanViewModel.localAthanTimes.observeAsState()
             SalahappTheme {
                 // A surface container using the 'background' color from the theme
                 Surface(color = MaterialTheme.colors.background) {
                     Column() {
-                        FindLocation(athanViewModel)
-                        AthanCardRow(athanViewModel)
+                        FindLocation(location)
+                        AthanCardRow(locationAthans)
                     }
 
                 }
@@ -121,96 +144,13 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@Preview(showBackground = true)
 @Composable
-fun CardDemo(SalahName: String, ArbitraryTime: String) {
-    Card(
-        shape = RoundedCornerShape(10),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(15.dp),
-        elevation = 10.dp
-    ) {
-        Column(
-            modifier = Modifier
-                .padding(25.dp)
-                .fillMaxWidth()
-        ) {
-            Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically){
-
-
-                // TODO: Figure out how to enhance color, sizing, and content description!
-                Icon(
-                    imageVector = WeatherIcons.Sunrise,
-                    contentDescription = null,
-                    tint= Color(0xFFff6f00),
-                    modifier = Modifier.
-                    then(Modifier.size(48.dp))
-
-                )
-
-            }
-
-            Text(
-                buildAnnotatedString {
-                    withStyle(style = SpanStyle(fontWeight = FontWeight.Light,fontSize = 20.sp, color = Color(0xFF607d8b) )
-                    ) {
-                        append("Upcoming Prayer")
-                    }
-                }
-            )
-
-            Text(
-                buildAnnotatedString {
-                    withStyle(style = SpanStyle(fontWeight =FontWeight.Bold, fontSize = 40.sp)
-                    ) {
-                        append("$SalahName at $ArbitraryTime")
-                    }
-                }
-            )
-
+fun DefaultPreview() {
+    val athanTimes = HashMap(SalatTimes(location = Location("TBD", 45.33, -75.33, 0.0, 4.0), calculationMethod = CalculationMethod.ISLAMIC_SOCIETY_OF_NORTH_AMERICA).salatDateTimes)
+    SalahappTheme {
+        Column() {
+            AthanCardRow(athanTimes)
         }
     }
 }
-
-@Composable
-fun FindLocation(athanViewModel: AthanViewModel) {
-    // TODO: code is messy as of now, def needs improvement if possible....
-    // Altidude seems borked on my device, no idea why. Need to investigate, zero altidude calculations are used on islamicFinder, so worst case we have same accuracy.
-
-    val location : Triple<Double,Double,Double>? by athanViewModel.currentLocation.observeAsState()
-    val (latidude, longitude, altitude) = location ?: Triple(0.0,0.0,0.0)
-    val date = Date().time
-    val tz = TimeZone.getDefault().getOffset(date) / (3600.0 * 1000.0)
-
-    Log.i("time", tz.toString())
-    Log.i("Salat Times: ",
-        SalatTimes(location = Location("TBD", latidude, longitude, altitude, tz), calculationMethod = CalculationMethod.ISLAMIC_SOCIETY_OF_NORTH_AMERICA).salatDateTimes.toString()
-    )
-    Text("$latidude $longitude $altitude")
-}
-
-
-
-@OptIn(ExperimentalPagerApi::class)
-@Composable
-fun AthanCardRow(athanViewModel: AthanViewModel) {
-    val athans = listOf("Fajr", "Dhuhr", "Asr", "Maghrib", "Isha")
-    val locationAthans : HashMap<String,LocalDateTime>? by athanViewModel.localAthanTimes.observeAsState()
-    val formatter = DateTimeFormatter.ofPattern("hh:mm a")
-    val pagerState = rememberPagerState(pageCount = 5)
-
-    HorizontalPager(state = pagerState) { page ->
-        // IDE GENERATED CODE -> Might need to get optimized / double checked.
-        locationAthans?.get(athans[page])?.let { CardDemo(ArbitraryTime = it.format(formatter), SalahName=athans[page]) }
-    }
-
-}
-
-
-//@Preview(showBackground = true)
-//@Composable
-//fun DefaultPreview() {
-//    SalahappTheme {
-//        AthanCardRow()
-//    }
-//}
