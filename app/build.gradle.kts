@@ -59,7 +59,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.4.0-alpha01")
     implementation("androidx.activity:activity-compose:1.3.0-alpha07")
     implementation("com.google.accompanist:accompanist-pager:0.8.1")
-    implementation("br.com.devsrsouza.compose.icons.android:erikflowers-weather-icons:0.2.0")
+    implementation("br.com.devsrsouza.compose.icons.android:tabler-icons:0.2.0")
     implementation("com.google.android.gms:play-services-location:18.0.0")
     implementation("androidx.compose.runtime:runtime-livedata:1.0.0-beta05")
     implementation("com.github.atutorme:kotlin-azan:0.0.9")
