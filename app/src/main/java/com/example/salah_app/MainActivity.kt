@@ -100,15 +100,10 @@ class MainActivity : ComponentActivity(), PermissionListener {
         getLocation()
 
         setContent {
-            val location: Triple<Double, Double, Double>? by athanViewModel.currentLocation.observeAsState()
-            val locationAthans: HashMap<String, LocalDateTime>? by athanViewModel.localAthanTimes.observeAsState()
             SalahappTheme {
                 // A surface container using the 'background' color from the theme
                 Surface(color = MaterialTheme.colors.background) {
-                    Column() {
-                        FindLocation(location)
-                        AthanCardRow(locationAthans)
-                    }
+                    MainScreen(athanViewModel)
                 }
             }
         }
