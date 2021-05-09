@@ -114,9 +114,12 @@ class MainActivity : ComponentActivity(), PermissionListener {
 @Composable
 fun DefaultPreview() {
     val athanTimes = HashMap(SalatTimes(location = Location("TBD", 45.33, -75.33, 0.0, 4.0), calculationMethod = CalculationMethod.ISLAMIC_SOCIETY_OF_NORTH_AMERICA).salatDateTimes)
+    val currentTime = LocalDateTime.now()
+    val currentAthanIndex = getMostRecentAthan(athanTimes, currentTime)
+
     SalahappTheme {
         Column() {
-            AthanCardRow(athanTimes)
+            AthanCardRow(athanTimes,currentAthanIndex)
         }
     }
 }
