@@ -25,12 +25,10 @@ import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
-import java.lang.Integer.max
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 import kotlin.collections.listOf
-
 
 @Composable
 fun CardDemo(SalahCard: AthanCard, ArbitraryTime: String) {
@@ -99,34 +97,30 @@ fun FindLocation(location: Triple<Double, Double, Double>?) {
     Text("$latitude $longitude $altitude")
 }
 
+fun getMostRecentAthan(locationAthans: HashMap<String, LocalDateTime>?, currentTime: LocalDateTime): Int {
+    val athans = listOf(AthanCard.FAJR.athanName, AthanCard.DHUHR.athanName, AthanCard.ASR.athanName, AthanCard.MAGHRIB.athanName, AthanCard.ISHA.athanName)
 
-fun getMostRecentAthan(locationAthans: HashMap<String, LocalDateTime>?, currentTime: LocalDateTime) : Int{
-    val athans = listOf(AthanCard.FAJR.athanName, AthanCard.DHUHR.athanName,AthanCard.ASR.athanName, AthanCard.MAGHRIB.athanName, AthanCard.ISHA.athanName)
-
-    if(currentTime.isAfter(locationAthans?.get(AthanCard.ISHA.athanName) ?: LocalDateTime.MAX)){
-        return athans.size -1
+    if (currentTime.isAfter(locationAthans?.get(AthanCard.ISHA.athanName) ?: LocalDateTime.MAX)) {
+        return athans.size - 1
     }
 
-    for (athanIndex in 0..athans.size-1) {
-        if (currentTime.isBefore(locationAthans?.get(athans[athanIndex]) ?: LocalDateTime.MAX)){
+    for (athanIndex in 0..athans.size - 1) {
+        if (currentTime.isBefore(locationAthans?.get(athans[athanIndex]) ?: LocalDateTime.MAX)) {
             return athanIndex
         }
     }
     return 0
 }
 
-
-
 @OptIn(ExperimentalPagerApi::class)
 @Composable
 fun AthanCardRow(locationAthans: HashMap<String, LocalDateTime>?, currentAthanIndex: Int) {
 
     var pagerState = rememberPagerState(pageCount = 5, initialPage = currentAthanIndex)
-    val athan = listOf(AthanCard.FAJR, AthanCard.DHUHR,AthanCard.ASR, AthanCard.MAGHRIB, AthanCard.ISHA)
+    val athan = listOf(AthanCard.FAJR, AthanCard.DHUHR, AthanCard.ASR, AthanCard.MAGHRIB, AthanCard.ISHA)
     val formatter = DateTimeFormatter.ofPattern("hh:mm a")
 
     Log.i("currentAthanIndex", currentAthanIndex.toString())
-
 
     /*
     TODO: Investigate better way of approaching this. Initial page seems to default to zero and
@@ -134,17 +128,17 @@ fun AthanCardRow(locationAthans: HashMap<String, LocalDateTime>?, currentAthanIn
     right on first index.
      */
 
-    if(pagerState.currentPage != currentAthanIndex){
+    if (pagerState.currentPage != currentAthanIndex) {
         pagerState = rememberPagerState(pageCount = 5, initialPage = currentAthanIndex)
     }
-    
+
     HorizontalPager(state = pagerState) { page ->
         locationAthans?.get(athan[page].athanName)?.let { CardDemo(ArbitraryTime = it.format(formatter), SalahCard = athan[page]) }
     }
 }
 
 @Composable
-fun MainScreen(athanViewModel: AthanViewModel){
+fun MainScreen(athanViewModel: AthanViewModel) {
     val location: Triple<Double, Double, Double>? by athanViewModel.currentLocation.observeAsState()
     val locationAthans: HashMap<String, LocalDateTime>? by athanViewModel.localAthanTimes.observeAsState()
     // TODO: Figure out a better way of doing this...
@@ -152,19 +146,19 @@ fun MainScreen(athanViewModel: AthanViewModel){
     val currentAthanIndex = getMostRecentAthan(locationAthans, currentTime)
     Column() {
         FindLocation(location)
-        AthanCardRow(locationAthans,currentAthanIndex)
+        AthanCardRow(locationAthans, currentAthanIndex)
     }
 }
 
+enum class AthanCard(
+    val athanName: String,
+    val cardIcon: ImageVector,
+    val iconColor: Color
+) {
 
-enum class AthanCard(val athanName: String,
-                             val cardIcon: ImageVector,
-                             val iconColor: Color) {
-
-    FAJR("Fajr", TablerIcons.Sunset,Color(0xFFffeb3b)),
-    DHUHR("Dhuhr", TablerIcons.Sun,Color(0xFFff6f00)),
-    ASR("Asr", TablerIcons.Flare,Color(0xFFe64a19)),
-    MAGHRIB("Maghrib",TablerIcons.Sunshine,Color(0xFF1565c0)),
-    ISHA("Isha", TablerIcons.MoonStars,Color(0xFF303f9f))
-
+    FAJR("Fajr", TablerIcons.Sunset, Color(0xFFffeb3b)),
+    DHUHR("Dhuhr", TablerIcons.Sun, Color(0xFFff6f00)),
+    ASR("Asr", TablerIcons.Flare, Color(0xFFe64a19)),
+    MAGHRIB("Maghrib", TablerIcons.Sunshine, Color(0xFF1565c0)),
+    ISHA("Isha", TablerIcons.MoonStars, Color(0xFF303f9f))
 }

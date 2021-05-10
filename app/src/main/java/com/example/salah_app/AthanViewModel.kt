@@ -23,7 +23,6 @@ class AthanViewModel : ViewModel() {
         calculate_athan_local_times()
     }
 
-
     fun calculate_athan_local_times() {
 
         val (latidude, longitude, altitude) = currentLocation.value ?: Triple(0.0, 0.0, 0.0)

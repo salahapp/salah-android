@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.salah_app.ui.theme.SalahappTheme
 import com.google.android.gms.common.api.ResolvableApiException
@@ -119,7 +118,7 @@ fun DefaultPreview() {
 
     SalahappTheme {
         Column() {
-            AthanCardRow(athanTimes,currentAthanIndex)
+            AthanCardRow(athanTimes, currentAthanIndex)
         }
     }
 }
