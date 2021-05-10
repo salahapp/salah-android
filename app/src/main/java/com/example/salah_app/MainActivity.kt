@@ -31,6 +31,7 @@ class MainActivity : ComponentActivity(), PermissionListener {
     protected val REQUEST_CHECK_SETTINGS = 0x1
 
     val athanViewModel by viewModels<AthanViewModel>()
+    val currentTimeViewModel by viewModels<LiveDataTimerViewModel>()
 
     override fun onPermissionGranted(response: PermissionGrantedResponse?) {
         getLocation()
@@ -102,7 +103,7 @@ class MainActivity : ComponentActivity(), PermissionListener {
             SalahappTheme {
                 // A surface container using the 'background' color from the theme
                 Surface(color = MaterialTheme.colors.background) {
-                    MainScreen(athanViewModel)
+                    MainScreen(athanViewModel, currentTimeViewModel)
                 }
             }
         }

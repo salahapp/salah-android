@@ -20,15 +20,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.MutableLiveData
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
 import compose.icons.TablerIcons
 import compose.icons.tablericons.*
+import java.lang.Integer.max
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 import kotlin.collections.listOf
+import androidx.lifecycle.ViewModelProvider
+
+
+
 
 @Composable
 fun CardDemo(SalahCard: AthanCard, ArbitraryTime: String) {
@@ -97,16 +103,19 @@ fun FindLocation(location: Triple<Double, Double, Double>?) {
     Text("$latitude $longitude $altitude")
 }
 
-fun getMostRecentAthan(locationAthans: HashMap<String, LocalDateTime>?, currentTime: LocalDateTime): Int {
+fun getMostRecentAthan(locationAthans: HashMap<String, LocalDateTime>?, currentTime: LocalDateTime?): Int {
+
+    val _currentTime = currentTime ?: LocalDateTime.now()
+
     val athans = listOf(AthanCard.FAJR.athanName, AthanCard.DHUHR.athanName, AthanCard.ASR.athanName, AthanCard.MAGHRIB.athanName, AthanCard.ISHA.athanName)
 
-    if (currentTime.isAfter(locationAthans?.get(AthanCard.ISHA.athanName) ?: LocalDateTime.MAX)) {
+    if (_currentTime.isAfter(locationAthans?.get(AthanCard.ISHA.athanName) ?: LocalDateTime.MAX)) {
         return athans.size - 1
     }
 
     for (athanIndex in 0..athans.size - 1) {
-        if (currentTime.isBefore(locationAthans?.get(athans[athanIndex]) ?: LocalDateTime.MAX)) {
-            return athanIndex
+        if (_currentTime.isBefore(locationAthans?.get(athans[athanIndex]) ?: LocalDateTime.MAX)) {
+            return max(0,athanIndex-1)
         }
     }
     return 0
@@ -120,7 +129,7 @@ fun AthanCardRow(locationAthans: HashMap<String, LocalDateTime>?, currentAthanIn
     val athan = listOf(AthanCard.FAJR, AthanCard.DHUHR, AthanCard.ASR, AthanCard.MAGHRIB, AthanCard.ISHA)
     val formatter = DateTimeFormatter.ofPattern("hh:mm a")
 
-    Log.i("currentAthanIndex", currentAthanIndex.toString())
+//    Log.i("currentAthanIndex", currentAthanIndex.toString())
 
     /*
     TODO: Investigate better way of approaching this. Initial page seems to default to zero and
@@ -138,15 +147,17 @@ fun AthanCardRow(locationAthans: HashMap<String, LocalDateTime>?, currentAthanIn
 }
 
 @Composable
-fun MainScreen(athanViewModel: AthanViewModel) {
+fun MainScreen(athanViewModel: AthanViewModel, timerViewModel: LiveDataTimerViewModel) {
     val location: Triple<Double, Double, Double>? by athanViewModel.currentLocation.observeAsState()
     val locationAthans: HashMap<String, LocalDateTime>? by athanViewModel.localAthanTimes.observeAsState()
-    // TODO: Figure out a better way of doing this...
-    val currentTime = LocalDateTime.now()
+    val currentTime : LocalDateTime? by  timerViewModel.currentTime.observeAsState()
+    val formatter = DateTimeFormatter.ofPattern("hh:mm:ss a")
+
     val currentAthanIndex = getMostRecentAthan(locationAthans, currentTime)
     Column() {
         FindLocation(location)
         AthanCardRow(locationAthans, currentAthanIndex)
+        Text(currentTime?.format(formatter).toString())
     }
 }
 
