@@ -12,8 +12,8 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.view.WindowCompat
 import com.example.salah_app.ui.theme.SalahappTheme
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
@@ -32,6 +32,7 @@ class MainActivity : ComponentActivity(), PermissionListener {
 
     val athanViewModel by viewModels<AthanViewModel>()
     val currentTimeViewModel by viewModels<LiveDataTimerViewModel>()
+    val cardsDataViewModel by viewModels<CardsDataViewModel>()
 
     override fun onPermissionGranted(response: PermissionGrantedResponse?) {
         getLocation()
@@ -97,29 +98,36 @@ class MainActivity : ComponentActivity(), PermissionListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // translucent notification bar...
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+
         getLocation()
 
-        setContent {
-            SalahappTheme {
-                // A surface container using the 'background' color from the theme
-                Surface(color = MaterialTheme.colors.background) {
-                    MainScreen(athanViewModel, currentTimeViewModel)
+
+            // We need to use ProvideWindowInsets to setup the necessary listeners which
+            // power the library
+
+                setContent {
+                    SalahappTheme {
+                        // A surface container using the 'background' color from the theme
+                        Surface(color = MaterialTheme.colors.background) {
+                            MainScreen(athanViewModel, currentTimeViewModel, cardsDataViewModel)
+                        }
+                    }
                 }
             }
         }
-    }
-}
+
 
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
     val athanTimes = HashMap(SalatTimes(location = Location("TBD", 45.33, -75.33, 0.0, 4.0), calculationMethod = CalculationMethod.ISLAMIC_SOCIETY_OF_NORTH_AMERICA).salatDateTimes)
     val currentTime = LocalDateTime.now()
-    val currentAthanIndex = getMostRecentAthan(athanTimes, currentTime)
 
     SalahappTheme {
         Column() {
-            AthanCardRow(athanTimes, currentAthanIndex)
+            AthanCardRow(athanTimes, currentTime, currentTime, {})
         }
     }
 }

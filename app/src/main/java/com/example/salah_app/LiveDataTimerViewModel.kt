@@ -18,9 +18,9 @@ class LiveDataTimerViewModel : ViewModel() {
         super.onCleared()
         timer.cancel()
     }
-
+    // TODO: REVERT THIS BACK TO ONE SECOND 1000L
     companion object {
-        private const val ONE_SECOND = 1000L
+        private const val ONE_SECOND = 5000L
     }
 
     init {

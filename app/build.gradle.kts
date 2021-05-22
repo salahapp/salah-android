@@ -34,17 +34,14 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
         useIR = true
-        freeCompilerArgs = listOf(
-            "-P",
-            "plugin:androidx.compose.compiler.plugins.kotlin:suppressKotlinVersionCompatibilityCheck=true"
-        )
+
     }
     buildFeatures {
         compose = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = rootProject.extra["compose_version"] as String
-        kotlinCompilerVersion = "1.4.32"
+
     }
 }
 
@@ -58,15 +55,16 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling:${rootProject.extra["compose_version"]}")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.4.0-alpha01")
     implementation("androidx.activity:activity-compose:1.3.0-alpha07")
-    implementation("com.google.accompanist:accompanist-pager:0.8.1")
+    implementation("com.google.accompanist:accompanist-pager:${rootProject.extra["accompanist_version"]}")
     implementation("br.com.devsrsouza.compose.icons.android:tabler-icons:0.2.0")
     implementation("com.google.android.gms:play-services-location:18.0.0")
-    implementation("androidx.compose.runtime:runtime-livedata:1.0.0-beta05")
+    implementation("androidx.compose.runtime:runtime-livedata:${rootProject.extra["compose_version"]}")
     implementation("com.github.atutorme:kotlin-azan:0.0.9")
     implementation("com.karumi:dexter:6.2.2")
-    testImplementation("junit:junit:4.+")
+    implementation("com.google.accompanist:accompanist-systemuicontroller:${rootProject.extra["accompanist_version"]}")
+    testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.2")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.3.0")
     androidTestImplementation("androidx.compose.ui:ui-test-junit4:${rootProject.extra["compose_version"]}")
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:1.0.9")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:1.1.5")
 }
